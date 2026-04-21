@@ -1,0 +1,222 @@
+/* Dashboard Specific Styles */
+
+/* Custom scrollbar for dashboard */
+.dashboard-scroll {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.dashboard-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dashboard-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.dashboard-scroll::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.dashboard-scroll::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Alert badges */
+.alert-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Status indicators */
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-online {
+    background-color: #28a745;
+}
+
+.status-offline {
+    background-color: #dc3545;
+}
+
+.status-warning {
+    background-color: #ffc107;
+}
+
+/* Quick stats grid */
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.quick-stat-item {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.quick-stat-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.quick-stat-item i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.quick-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    display: block;
+    line-height: 1;
+}
+
+.quick-stat-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+/* Chart containers */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* Recent activity timeline */
+.activity-timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.activity-timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--primary-color), transparent);
+}
+
+.activity-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.activity-item::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: white;
+    border: 3px solid var(--primary-color);
+}
+
+.activity-item.success::before {
+    border-color: var(--success-color);
+}
+
+.activity-item.danger::before {
+    border-color: var(--danger-color);
+}
+
+.activity-item.warning::before {
+    border-color: var(--warning-color);
+}
+
+.activity-time {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.activity-text {
+    margin: 0.25rem 0;
+}
+
+/* Prediction cards */
+.prediction-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.prediction-card .card-body {
+    padding: 2rem;
+}
+
+.prediction-value {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    margin: 1rem 0;
+}
+
+.prediction-label {
+    opacity: 0.9;
+    font-size: 0.875rem;
+}
+
+/* Inventory summary cards */
+.inventory-summary-card {
+    border-left: 4px solid var(--primary-color);
+}
+
+.inventory-summary-card.warning {
+    border-left-color: var(--warning-color);
+}
+
+.inventory-summary-card.danger {
+    border-left-color: var(--danger-color);
+}
+
+.inventory-summary-card.success {
+    border-left-color: var(--success-color);
+}
+
+/* Responsive grid for dashboard */
+@media (max-width: 1200px) {
+    .quick-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .quick-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .activity-timeline {
+        padding-left: 1.5rem;
+    }
+}

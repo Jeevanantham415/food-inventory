@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory Management - AI Food Inventory{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="display-5 fw-bold">
+                    <i class="fas fa-boxes"></i> Inventory Management
+                </h1>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                    <i class="fas fa-plus"></i> Add New Item
+                </button>
+            </div>
+            <p class="text-muted">Manage your food inventory with AI-powered insights</p>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search items..." 
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="categoryFilter">
+                        <option value="all" {% if selected_category == 'all' %}selected{% endif %}>All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>
+                            {{ category }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter">
+                        <option value="all">All Status</option>
+                        <option value="low_stock">Low Stock</option>
+                        <option value="expiring">Expiring Soon</option>
+                        <option value="expired">Expired</option>
+                        <option value="good">Good</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Category</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Expiry Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTable">
+                        {% for item in items %}
+                        <tr class="{% if item.is_expired %}table-danger{% elif item.days_to_expiry <= 3 %}table-warning{% endif %}">
+                            <td>
+                                <strong>{{ item.name }}</strong>
+                                {% if item.supplier %}
+                                <br><small class="text-muted">Supplier: {{ item.supplier }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ item.category }}</span>
+                                {% if item.storage_location %}
+                                <br><small class="text-muted">{{ item.storage_location }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 10px;">
+                                    {% set progress = (item.quantity / item.max_stock_level * 100) if item.max_stock_level > 0 else 0 %}
+                                    <div class="progress-bar {% if progress < 20 %}bg-danger{% elif progress < 50 %}bg-warning{% else %}bg-success{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ progress|clamp(0, 100) }}%">
+                                    </div>
+                                </div>
+                                {{ item.quantity }} / {{ item.max_stock_level }}
+                            </td>
+                            <td>${{ "%.2f"|format(item.price) }}</td>
+                            <td>
+                                {{ item.expiry_date.strftime('%Y-%m-%d') }}
+                                <br>
+                                <small class="{% if item.days_to_expiry < 0 %}text-danger{% elif item.days_to_expiry <= 3 %}text-warning{% else %}text-success{% endif %}">
+                                    {% if item.days_to_expiry < 0 %}
+                                    Expired {{ -item.days_to_expiry }} days ago
+                                    {% else %}
+                                    {{ item.days_to_expiry }} days left
+                                    {% endif %}
+                                </small>
+                            </td>
+                            <td>
+                                {% if item.is_expired %}
+                                <span class="badge bg-danger">Expired</span>
+                                {% elif item.days_to_expiry <= 3 %}
+                                <span class="badge bg-warning">Expiring Soon</span>
+                                {% elif item.is_low_stock %}
+                                <span class="badge bg-danger">Low Stock</span>
+                                {% else %}
+                                <span class="badge bg-success">Good</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" 
+                                            onclick="editItem({{ item.id }})"
+                                            data-bs-toggle="tooltip" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-success"
+                                            onclick="restockItem({{ item.id }})"
+                                            data-bs-toggle="tooltip" title="Restock">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger"
+                                            onclick="deleteItem({{ item.id }})"
+                                            data-bs-toggle="tooltip" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                <h4>No items found</h4>
+                                <p class="text-muted">Add your first item to get started</p>
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                                    <i class="fas fa-plus"></i> Add Item
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if items|length > 0 %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Item Modal -->
+<div class="modal fade" id="addItemModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Add New Item</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addItemForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Item Name *</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Category *</label>
+                            <select class="form-select" name="category" required>
+                                <option value="">Select Category</option>
+                                <option value="Dairy">Dairy</option>
+                                <option value="Bakery">Bakery</option>
+                                <option value="Beverages">Beverages</option>
+                                <option value="Vegetables">Vegetables</option>
+                                <option value="Fruits">Fruits</option>
+                                <option value="Meat">Meat</option>
+                                <option value="Frozen">Frozen Foods</option>
+                                <option value="Canned">Canned Goods</option>
+                                <option value="Snacks">Snacks</option>
+                                <option value="Condiments">Condiments</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Quantity *</label>
+                            <input type="number" class="form-control" name="quantity" min="0" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Price ($) *</label>
+                            <input type="number" step="0.01" class="form-control" name="price" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Expiry Date *</label>
+                            <input type="date" class="form-control" name="expiry_date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Supplier</label>
+                            <input type="text" class="form-control" name="supplier">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Storage Location</label>
+                            <input type="text" class="form-control" name="storage_location">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Minimum Stock Level</label>
+                            <input type="number" class="form-control" name="min_stock_level" value="10">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Maximum Stock Level</label>
+                            <input type="number" class="form-control" name="max_stock_level" value="100">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Barcode (Optional)</label>
+                        <input type="text" class="form-control" name="barcode">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addItem()">
+                    <i class="fas fa-save"></i> Save Item
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Filter functionality
+    document.getElementById('searchInput').addEventListener('input', function() {
+        filterTable();
+    });
+    
+    document.getElementById('categoryFilter').addEventListener('change', function() {
+        const category = this.value;
+        window.location.href = `{{ url_for('inventory') }}?category=${category}`;
+    });
+    
+    document.getElementById('statusFilter').addEventListener('change', function() {
+        filterTable();
+    });
+    
+    function filterTable() {
+        const searchText = document.getElementById('searchInput').value.toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value;
+        const rows = document.querySelectorAll('#inventoryTable tr');
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const isExpired = row.classList.contains('table-danger');
+            const isExpiring = row.classList.contains('table-warning');
+            const isLowStock = row.querySelector('.badge.bg-danger')?.textContent.includes('Low Stock');
+            
+            let statusMatch = true;
+            if (statusFilter !== 'all') {
+                if (statusFilter === 'low_stock' && !isLowStock) statusMatch = false;
+                if (statusFilter === 'expiring' && !isExpiring) statusMatch = false;
+                if (statusFilter === 'expired' && !isExpired) statusMatch = false;
+                if (statusFilter === 'good' && (isExpired || isExpiring || isLowStock)) statusMatch = false;
+            }
+            
+            const textMatch = text.includes(searchText);
+            row.style.display = (textMatch && statusMatch) ? '' : 'none';
+        });
+    }
+    
+    // Add item
+    function addItem() {
+        const form = document.getElementById('addItemForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+        
+        fetch('/api/items', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Item added successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    }
+    
+    function editItem(itemId) {
+        alert('Edit functionality for item ' + itemId + ' would open an edit modal.');
+    }
+    
+    function restockItem(itemId) {
+        const quantity = prompt('Enter restock quantity:');
+        if (quantity && !isNaN(quantity) && quantity > 0) {
+            alert(`Restocked ${quantity} units for item ${itemId}`);
+            // In real app, call API to update quantity
+        }
+    }
+    
+    function deleteItem(itemId) {
+        if (confirm('Are you sure you want to delete this item?')) {
+            fetch(`/api/items/${itemId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Item deleted successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

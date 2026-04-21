@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}AI Status Predictor - Food Inventory{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold">
+                <i class="fas fa-magic text-primary"></i> AI Status Predictor
+            </h1>
+            <p class="text-muted">Analyze live inventory factors (Price, Category, Quantity) and Historical Data to
+                predict an item's viability.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Input Form Column -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-search-plus"></i> Predict Item Status</h5>
+                </div>
+                <div class="card-body">
+                    <form id="predictionForm" onsubmit="event.preventDefault(); predictStatus();">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Auto-fill from Inventory (Optional)</label>
+                            <select class="form-select border-primary bg-light" id="autoFillItem"
+                                onchange="autoFillForm()">
+                                <option value="">-- Choose an existing item --</option>
+                                {% for item in items %}
+                                <option value="{{ item.id }}" data-name="{{ item.name }}"
+                                    data-category="{{ item.category }}" data-quantity="{{ item.quantity }}"
+                                    data-price="{{ item.price }}" data-days="{{ item.days_to_expiry }}">
+                                    {{ item.name }} ({{ item.category }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <hr>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Item Name</label>
+                                <input type="text" id="predName" class="form-control" required placeholder="e.g. Milk">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Category</label>
+                                <select id="predCategory" class="form-select" required>
+                                    <option value="">Select Category</option>
+                                    <option value="Dairy">Dairy</option>
+                                    <option value="Bakery">Bakery</option>
+                                    <option value="Beverages">Beverages</option>
+                                    <option value="Vegetables">Vegetables</option>
+                                    <option value="Fruits">Fruits</option>
+                                    <option value="Meat">Meat</option>
+                                    <option value="Frozen">Frozen</option>
+                                    <option value="Snacks">Snacks</option>
+                                    <option value="Grains">Grains</option>
+                                    <option value="Groceries">Groceries</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Current Quantity</label>
+                                <input type="number" id="predQty" class="form-control" required min="1" value="50">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Price Per Unit (₹)</label>
+                                <input type="number" step="0.01" id="predPrice" class="form-control" required min="0.1"
+                                    value="10.0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Days to Expiry</label>
+                                <input type="number" id="predDays" class="form-control" required value="5">
+                                <small class="text-muted">Use negative for expired</small>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 fs-5" id="predictBtn">
+                            <i class="fas fa-bolt"></i> Run AI Analysis
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden Result View -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100" id="resultCard" style="opacity: 0.5;">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-robot"></i> Analysis Results</h5>
+                </div>
+                <div class="card-body d-flex flex-column justify-content-center align-items-center bg-light"
+                    id="resultBody">
+
+                    <!-- Pre Run UI -->
+                    <div id="preRunUI" class="text-center w-100">
+                        <i class="fas fa-satellite-dish fa-4x text-secondary mb-3"></i>
+                        <h4 class="text-secondary">Awaiting Parameters</h4>
+                        <p class="text-muted">Enter item details and run the analysis to generate predictions</p>
+                    </div>
+
+                    <!-- Post Run UI -->
+                    <div id="postRunUI" class="text-center w-100 d-none">
+                        <div class="mb-4">
+                            <h6 class="text-uppercase text-muted fw-bold mb-2">Predicted Status</h6>
+                            <h1 class="display-3 fw-bold mb-0" id="resultStatus" style="letter-spacing: -2px;">--</h1>
+                        </div>
+
+                        <div class="card bg-white border-0 shadow-sm w-100 mb-4 text-start">
+                            <div class="card-body">
+                                <h6>AI Confidence Level</h6>
+                                <div class="progress mb-2" style="height: 25px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                        id="resultConfidenceBar" style="width: 0%">0%</div>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted small">
+                                    <span>Uncertain</span>
+                                    <span>Highly Probable</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert mt-2 text-start" id="resultAlert" role="alert">
+                            <i class="fas fa-info-circle me-1"></i> <span id="resultMessage">--</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function autoFillForm() {
+        const select = document.getElementById('autoFillItem');
+        const selectedOption = select.options[select.selectedIndex];
+
+        if (selectedOption.value) {
+            document.getElementById('predName').value = selectedOption.getAttribute('data-name');
+            document.getElementById('predCategory').value = selectedOption.getAttribute('data-category');
+            document.getElementById('predQty').value = selectedOption.getAttribute('data-quantity');
+            document.getElementById('predPrice').value = selectedOption.getAttribute('data-price');
+            document.getElementById('predDays').value = selectedOption.getAttribute('data-days');
+
+            // Auto run
+            predictStatus();
+        }
+    }
+
+    function predictStatus() {
+        // Collect data
+        const data = {
+            name: document.getElementById('predName').value,
+            category: document.getElementById('predCategory').value,
+            quantity: parseInt(document.getElementById('predQty').value),
+            price: parseFloat(document.getElementById('predPrice').value),
+            days_to_expiry: parseInt(document.getElementById('predDays').value)
+        };
+
+        // Loading state
+        const btn = document.getElementById('predictBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+        btn.disabled = true;
+
+        // API Call
+        fetch('/api/predict-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+
+                if (data.success) {
+                    showResults(data.status, data.confidence);
+                } else {
+                    alert('Analysis failed: ' + data.error);
+                }
+            })
+            .catch(error => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                alert('JS Error connecting to backend model: ' + error.message + '\n' + error);
+                console.error("Full AI Fetch Error:", error);
+            });
+    }
+
+    function showResults(status, confidence) {
+        // Reset card styling
+        const card = document.getElementById('resultCard');
+        card.style.opacity = '1';
+
+        document.getElementById('preRunUI').classList.add('d-none');
+        document.getElementById('postRunUI').classList.remove('d-none');
+
+        const statusEl = document.getElementById('resultStatus');
+        const confBar = document.getElementById('resultConfidenceBar');
+        const alertBox = document.getElementById('resultAlert');
+        const messageEl = document.getElementById('resultMessage');
+
+        // Apply visual themes based on prediction output
+        try {
+            if (statusEl) {
+                // Initial generic set removed because we override it in the condition branches
+            }
+            if (confBar) {
+                confBar.style.width = confidence + '%';
+                confBar.innerText = confidence + '%';
+            }
+
+            if (status.toLowerCase().includes('expired') || status.toLowerCase().includes('waste') || status.toLowerCase().includes('risk')) {
+                if (statusEl) {
+                    statusEl.innerText = "High Spoilage Risk / Dispose Soon";
+                    statusEl.className = "display-4 fw-bold mb-0 text-danger";
+                }
+                if (confBar) confBar.className = "progress-bar progress-bar-striped progress-bar-animated bg-danger";
+                if (alertBox) alertBox.className = "alert alert-danger mt-3 mb-0 text-start";
+                if (messageEl) messageEl.innerText = "The model suggests a high risk of this item deteriorating or becoming waste very soon. Recommended Action: Discount heavily or remove from active inventory.";
+            } else {
+                if (statusEl) {
+                    statusEl.innerText = "Safe to Retain & Sell / Good Condition";
+                    statusEl.className = "display-4 fw-bold mb-0 text-success";
+                }
+                if (confBar) confBar.className = "progress-bar progress-bar-striped progress-bar-animated bg-success";
+                if (alertBox) alertBox.className = "alert alert-success mt-3 mb-0 text-start";
+                if (messageEl) messageEl.innerText = "The model classifies this item as relatively stable. It is safe to retain in current inventory without immediate forced discounts.";
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+</script>
+{% endblock %}

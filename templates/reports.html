@@ -1,0 +1,550 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - AI Food Inventory{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold">
+                <i class="fas fa-chart-pie"></i> Analytics & Reports
+            </h1>
+            <p class="text-muted">Generate insights and reports for better decision making</p>
+        </div>
+    </div>
+
+    <!-- Report Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Report Type</label>
+                    <select class="form-select" id="reportType">
+                        <option value="inventory">Inventory Summary</option>
+                        <option value="expiry">Expiry Analysis</option>
+                        <option value="sales">Sales Performance</option>
+                        <option value="waste">Waste Analysis</option>
+                        <option value="demand">Demand Forecast</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Date Range</label>
+                    <select class="form-select" id="dateRange">
+                        <option value="7">Last 7 Days</option>
+                        <option value="30" selected>Last 30 Days</option>
+                        <option value="90">Last 90 Days</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-none" id="customDateRange">
+                    <label class="form-label">Custom Range</label>
+                    <input type="text" class="form-control daterange">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="categoryFilter">
+                        <option value="all">All Categories</option>
+                        <option value="dairy">Dairy</option>
+                        <option value="bakery">Bakery</option>
+                        <option value="beverages">Beverages</option>
+                        <option value="vegetables">Vegetables</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" onclick="generateReport()">
+                        <i class="fas fa-chart-bar"></i> Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Cards -->
+    <div class="row mb-4" id="reportCards">
+        <!-- Cards will be loaded here -->
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Performance Overview</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Category Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Report -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-table"></i> Detailed Report Data</h5>
+            <div class="btn-group">
+                <button class="btn btn-outline-primary" onclick="exportToCSV()">
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </button>
+                <button class="btn btn-outline-success" onclick="exportToPDF()">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+                <button class="btn btn-outline-info" onclick="printReport()">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="reportTable">
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Category</th>
+                            <th>Current Stock</th>
+                            <th>Avg Daily Sales</th>
+                            <th>Days of Supply</th>
+                            <th>Waste %</th>
+                            <th>Profit Margin</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights Section -->
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="fas fa-lightbulb"></i> AI-Generated Insights</h5>
+        </div>
+        <div class="card-body">
+            <div class="row" id="insightsContainer">
+                <!-- Insights will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Styles for reports -->
+<style>
+    .report-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: transform 0.3s;
+    }
+    
+    .report-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .report-card .icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+    
+    .report-card .value {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .report-card .label {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    
+    .insight-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-left: 4px solid #4361ee;
+    }
+    
+    .insight-card.warning {
+        border-left-color: #ffc107;
+    }
+    
+    .insight-card.danger {
+        border-left-color: #dc3545;
+    }
+    
+    .insight-card.success {
+        border-left-color: #28a745;
+    }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script>
+    let performanceChart = null;
+    let categoryChart = null;
+
+    // Generate report based on filters
+    function generateReport() {
+        const reportType = document.getElementById('reportType').value;
+        const dateRange = document.getElementById('dateRange').value;
+        const category = document.getElementById('categoryFilter').value;
+        
+        // Show loading
+        document.getElementById('reportCards').innerHTML = `
+            <div class="col-12 text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Generating report...</p>
+            </div>
+        `;
+        
+        // Simulate API call
+        setTimeout(() => {
+            loadReportCards(reportType);
+            loadCharts(reportType);
+            loadReportTable(reportType);
+            loadInsights(reportType);
+        }, 1000);
+    }
+
+    // Load report cards
+    function loadReportCards(reportType) {
+        let cardsHTML = '';
+        
+        switch(reportType) {
+            case 'inventory':
+                cardsHTML = `
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="icon text-primary">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <div class="value">1,245</div>
+                            <div class="label">Total Items</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="icon text-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="value">42</div>
+                            <div class="label">Low Stock Items</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="icon text-danger">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="value">18</div>
+                            <div class="label">Expiring Soon</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="icon text-success">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="value">$12,450</div>
+                            <div class="label">Inventory Value</div>
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'expiry':
+                cardsHTML = `
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="icon text-danger">
+                                <i class="fas fa-skull-crossbones"></i>
+                            </div>
+                            <div class="value">7</div>
+                            <div class="label">Expired Items</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="icon text-warning">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="value">$1,250</div>
+                            <div class="label">At Risk Value</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="icon text-info">
+                                <i class="fas fa-tag"></i>
+                            </div>
+                            <div class="value">$850</div>
+                            <div class="label">Potential Savings</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="icon text-success">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div class="value">3.2%</div>
+                            <div class="label">Waste Rate</div>
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'sales':
+                cardsHTML = `
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="icon text-success">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="value">$45,620</div>
+                            <div class="label">Total Revenue</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="icon text-primary">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="value">2,845</div>
+                            <div class="label">Items Sold</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="icon text-info">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="value">Dairy</div>
+                            <div class="label">Top Category</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="icon text-warning">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div class="value">+15.3%</div>
+                            <div class="label">Growth Rate</div>
+                        </div>
+                    </div>
+                `;
+                break;
+        }
+        
+        document.getElementById('reportCards').innerHTML = cardsHTML;
+    }
+
+    // Load charts
+    function loadCharts(reportType) {
+        // Destroy existing charts
+        if (performanceChart) performanceChart.destroy();
+        if (categoryChart) categoryChart.destroy();
+        
+        // Performance Chart
+        const perfCtx = document.getElementById('performanceChart').getContext('2d');
+        performanceChart = new Chart(perfCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Sales',
+                    data: [4500, 5200, 4800, 6100, 5800, 7200, 6800, 8100, 7900, 9200, 8900, 9500],
+                    borderColor: '#4361ee',
+                    backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                    borderWidth: 3,
+                    fill: true
+                }, {
+                    label: 'Waste',
+                    data: [320, 280, 310, 290, 350, 420, 380, 410, 390, 360, 330, 310],
+                    borderColor: '#f72585',
+                    backgroundColor: 'rgba(247, 37, 133, 0.1)',
+                    borderWidth: 3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Category Chart
+        const catCtx = document.getElementById('categoryChart').getContext('2d');
+        categoryChart = new Chart(catCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Dairy', 'Bakery', 'Beverages', 'Vegetables', 'Fruits', 'Meat', 'Frozen'],
+                datasets: [{
+                    data: [25, 15, 18, 12, 10, 8, 12],
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                        '#9966FF', '#FF9F40', '#C9CBCF'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // Load report table
+    function loadReportTable(reportType) {
+        let tableHTML = '';
+        
+        // Sample data
+        const sampleData = [
+            { name: 'Organic Milk', category: 'Dairy', stock: 45, avgSales: 25, daysSupply: 1.8, waste: 2.1, margin: 35, status: 'Good' },
+            { name: 'Whole Wheat Bread', category: 'Bakery', stock: 12, avgSales: 18, daysSupply: 0.7, waste: 8.5, margin: 28, status: 'Low Stock' },
+            { name: 'Fresh Apples', category: 'Fruits', stock: 85, avgSales: 32, daysSupply: 2.7, waste: 1.2, margin: 42, status: 'Good' },
+            { name: 'Coca-Cola', category: 'Beverages', stock: 120, avgSales: 45, daysSupply: 2.7, waste: 0.5, margin: 25, status: 'Good' },
+            { name: 'Chicken Breast', category: 'Meat', stock: 8, avgSales: 15, daysSupply: 0.5, waste: 12.3, margin: 38, status: 'Critical' },
+            { name: 'Frozen Pizza', category: 'Frozen', stock: 32, avgSales: 20, daysSupply: 1.6, waste: 3.2, margin: 32, status: 'Good' },
+            { name: 'Greek Yogurt', category: 'Dairy', stock: 15, avgSales: 22, daysSupply: 0.7, waste: 5.6, margin: 40, status: 'Low Stock' },
+            { name: 'Orange Juice', category: 'Beverages', stock: 28, avgSales: 18, daysSupply: 1.6, waste: 4.3, margin: 30, status: 'Good' }
+        ];
+        
+        sampleData.forEach(item => {
+            let statusClass = '';
+            switch(item.status) {
+                case 'Good': statusClass = 'badge bg-success'; break;
+                case 'Low Stock': statusClass = 'badge bg-warning'; break;
+                case 'Critical': statusClass = 'badge bg-danger'; break;
+            }
+            
+            tableHTML += `
+                <tr>
+                    <td>${item.name}</td>
+                    <td><span class="badge bg-info">${item.category}</span></td>
+                    <td>${item.stock}</td>
+                    <td>${item.avgSales}</td>
+                    <td>${item.daysSupply}</td>
+                    <td>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar ${item.waste > 5 ? 'bg-danger' : item.waste > 2 ? 'bg-warning' : 'bg-success'}" 
+                                 style="width: ${Math.min(item.waste * 10, 100)}%">
+                            </div>
+                        </div>
+                        ${item.waste}%
+                    </td>
+                    <td>${item.margin}%</td>
+                    <td><span class="${statusClass}">${item.status}</span></td>
+                </tr>
+            `;
+        });
+        
+        document.querySelector('#reportTable tbody').innerHTML = tableHTML;
+    }
+
+    // Load insights
+    function loadInsights(reportType) {
+        let insightsHTML = '';
+        
+        insightsHTML = `
+            <div class="col-md-6">
+                <div class="insight-card warning">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Warning</h6>
+                    <p>Chicken Breast has only 0.5 days of supply left. Consider urgent restocking.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="insight-card success">
+                    <h6><i class="fas fa-lightbulb"></i> Opportunity</h6>
+                    <p>Fresh Apples show high margin (42%) with low waste (1.2%). Consider increasing stock.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="insight-card">
+                    <h6><i class="fas fa-chart-line"></i> Trend Analysis</h6>
+                    <p>Dairy category shows 15% sales growth month-over-month. Highest demand on weekends.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="insight-card danger">
+                    <h6><i class="fas fa-skull-crossbones"></i> Risk Alert</h6>
+                    <p>Bakery waste rate is 8.5% above industry average. Review expiry management process.</p>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('insightsContainer').innerHTML = insightsHTML;
+    }
+
+    // Export functions
+    function exportToCSV() {
+        alert('CSV export started. This would download a CSV file in a real application.');
+    }
+    
+    function exportToPDF() {
+        alert('PDF report generation started. This would generate a PDF in a real application.');
+    }
+    
+    function printReport() {
+        window.print();
+    }
+
+    // Date range selector
+    document.getElementById('dateRange').addEventListener('change', function() {
+        if (this.value === 'custom') {
+            document.getElementById('customDateRange').classList.remove('d-none');
+        } else {
+            document.getElementById('customDateRange').classList.add('d-none');
+        }
+    });
+
+    // Initialize date picker
+    document.addEventListener('DOMContentLoaded', function() {
+        // Generate initial report
+        generateReport();
+        
+        // Initialize daterange picker if available
+        if (typeof $.fn.daterangepicker !== 'undefined') {
+            $('.daterange').daterangepicker({
+                opens: 'left',
+                locale: {
+                    format: 'YYYY-MM-DD'
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
