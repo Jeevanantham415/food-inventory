@@ -1,105 +1,77 @@
 {% extends "base.html" %}
 
-{% block title %}Inventory Management{% endblock %}
+{% block title %}Add New Item - AI Food Inventory{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="fas fa-boxes"></i> Inventory Management</h2>
-
+        <h2><i class="fas fa-plus-circle text-primary"></i> Add New Inventory Item</h2>
     </div>
 
-
-
-
-    <!-- ===================== -->
-    <!-- ADD / EDIT MODAL -->
-    <!-- ===================== -->
-
-    <form id="itemForm">
-
-        <input type="hidden" id="itemId">
-
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <label>Name *</label>
-                <input type="text" id="name" class="form-control" required>
-            </div>
-
-            <div class="col-md-6">
-                <label>Category *</label>
-                <select id="category" class="form-select" required>
-                    <option value="">Select Category</option>
-                    <option value="Dairy">Dairy</option>
-                    <option value="Bakery">Bakery</option>
-                    <option value="Beverages">Beverages</option>
-                    <option value="Vegetables">Vegetables</option>
-                    <option value="Fruits">Fruits</option>
-                    <option value="Meat">Meat</option>
-                    <option value="Frozen">Frozen</option>
-                    <option value="Snacks">Snacks</option>
-                    <option value="Others">Others</option>
-                </select>
-            </div>
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-boxes"></i> Item Details</h5>
         </div>
+        <div class="card-body p-4">
+            <form id="itemForm" onsubmit="event.preventDefault(); saveItem();">
+                <input type="hidden" id="itemId">
 
-        <div class="row mb-3">
-            <div class="col-md-4">
-                <label>Quantity *</label>
-                <input type="number" id="quantity" class="form-control" required>
-            </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Name *</label>
+                        <input type="text" id="name" class="form-control" placeholder="Item Name (e.g. Fresh Milk)" required>
+                    </div>
 
-            <div class="col-md-4">
-                <label>Price Per Unit *</label>
-                <input type="number" step="0.01" id="price" class="form-control" required>
-            </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Category *</label>
+                        <select id="category" class="form-select" required>
+                            <option value="">Select Category</option>
+                            <option value="Dairy">Dairy</option>
+                            <option value="Bakery">Bakery</option>
+                            <option value="Beverages">Beverages</option>
+                            <option value="Vegetables">Vegetables</option>
+                            <option value="Fruits">Fruits</option>
+                            <option value="Meat">Meat</option>
+                            <option value="Frozen">Frozen</option>
+                            <option value="Snacks">Snacks</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                </div>
 
-            <div class="col-md-4">
-                <label>Expiry Date *</label>
-                <input type="date" id="expiry_date" class="form-control" required>
-            </div>
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Quantity *</label>
+                        <input type="number" id="quantity" class="form-control" placeholder="100" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Price Per Unit (₹) *</label>
+                        <input type="number" step="0.01" id="price" class="form-control" placeholder="50.00" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Expiry Date *</label>
+                        <input type="date" id="expiry_date" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'inventory' %}" class="btn btn-secondary px-4">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="fas fa-save me-2"></i> Save Item
+                    </button>
+                </div>
+            </form>
         </div>
-
-
-
-    </form>
+    </div>
 </div>
-
-<div class="modal-footer">
-    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-
-    <button class="btn btn-primary" onclick="saveItem()">
-        <i class="fas fa-save"></i> Save
-    </button>
-</div>
-
-
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-
-    let modal = new bootstrap.Modal(document.getElementById('itemModal'));
-
-    // =======================
-    // SEARCH
-    // =======================
-    document.getElementById("searchInput").addEventListener("keyup", function () {
-        let value = this.value.toLowerCase();
-        document.querySelectorAll("#inventoryTable tr").forEach(row => {
-            row.style.display = row.textContent.toLowerCase().includes(value) ? "" : "none";
-        });
-    });
-
-    // =======================
-    // ADD OR UPDATE
-    // =======================
     function saveItem() {
-
         const id = document.getElementById("itemId").value;
-
         const data = {
             name: document.getElementById("name").value,
             category: document.getElementById("category").value,
@@ -109,8 +81,7 @@
         };
 
         if (id) {
-            // UPDATE
-            fetch(`/api/items/${id}`, {
+            fetch(`/api/items/${id}/`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
@@ -119,15 +90,13 @@
                 .then(response => {
                     if (response.success) {
                         alert("Item updated successfully!");
-                        location.reload();
+                        window.location.href = "{% url 'inventory' %}";
                     } else {
-                        alert(response.error);
+                        alert("Error: " + response.error);
                     }
                 });
-
         } else {
-            // ADD
-            fetch("/api/items", {
+            fetch("/api/items/", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
@@ -136,99 +105,12 @@
                 .then(response => {
                     if (response.success) {
                         alert("Item saved successfully!");
-                        location.reload();
+                        window.location.href = "{% url 'inventory' %}";
                     } else {
-                        alert(response.error);
+                        alert("Error: " + response.error);
                     }
                 });
         }
-    }
-
-    // =======================
-    // EDIT
-    // =======================
-    function editItem(id) {
-
-        fetch(`/api/items/${id}`)
-            .then(res => res.json())
-            .then(item => {
-
-                document.getElementById("modalTitle").innerText = "Edit Item";
-                document.getElementById("itemId").value = item.id;
-                document.getElementById("name").value = item.name;
-                document.getElementById("category").value = item.category;
-                document.getElementById("quantity").value = item.quantity;
-                document.getElementById("price").value = item.price;
-                document.getElementById("expiry_date").value = item.expiry_date;
-
-                modal.show();
-            });
-    }
-
-    // =======================
-    // DELETE
-    // =======================
-    function deleteItem(id) {
-
-        if (!confirm("Are you sure you want to delete this item?"))
-            return;
-
-        fetch(`/api/items/${id}`, {
-            method: "DELETE"
-        })
-            .then(res => res.json())
-            .then(response => {
-                if (response.success) {
-                    location.reload();
-                } else {
-                    alert(response.error);
-                }
-            });
-    }
-
-    // Reset modal when closed
-    document.getElementById('itemModal').addEventListener('hidden.bs.modal', function () {
-        document.getElementById("itemForm").reset();
-        document.getElementById("itemId").value = "";
-        document.getElementById("modalTitle").innerText = "Add Item";
-    });
-
-
-    function deleteItem(id) {
-
-        if (!confirm("Are you sure you want to delete this item?")) {
-            return;
-        }
-
-        fetch(`/api/items/${id}`, {
-            method: "DELETE",
-            headers: {
-                "Content-Type": "application/json"
-            }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error("Delete failed");
-                }
-                return response.json();
-            })
-            .then(data => {
-                alert(data.message);
-
-                // Remove row instantly without reload
-                const row = document.getElementById("row-" + id);
-                if (row) {
-                    row.remove();
-                }
-
-                // OR reload table
-                // loadItems();
-
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                alert("Error deleting item");
-            });
     }
 </script>
 {% endblock %}

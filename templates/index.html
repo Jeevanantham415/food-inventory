@@ -1,67 +1,59 @@
 {% extends "base.html" %}
 
-{% block title %}AI Food Inventory Management System{% endblock %}
+{% block title %}Food Inventory Management System{% endblock %}
 
 {% block content %}
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-
 <div class="container-fluid px-0">
     <!-- Hero Section -->
-    <section class="hero-section py-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center;">
+    <section class="hero-section py-5" style="background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%); min-height: 85vh; display: flex; align-items: center;">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6 text-white">
                     <h1 class="display-4 fw-bold mb-4">
-                        <i class="fas fa-robot me-3"></i> Smart Food Inventory
+                        <i class="fas fa-boxes me-3"></i> Smart Food Inventory
                     </h1>
                     <p class="lead mb-4 fs-5">
-                        Revolutionize your supermarket operations with AI-powered inventory management. Reduce waste, optimize stock, and boost profits.
+                        Streamline your supermarket operations with automated inventory management. Prevent waste, optimize stock levels, and maximize profits.
                     </p>
-                    <div class="d-flex flex-wrap gap-3 mb-4">
-                        {% if not current_user.is_authenticated %}
-                        <a href="{{ url_for('register') }}" class="btn btn-light btn-lg px-4 py-3 shadow-lg">
-                            <i class="fas fa-rocket me-2"></i> Get Started
+                    <div class="d-flex flex-wrap gap-3 mb-5">
+                        {% if not user.is_authenticated %}
+                        <a href="{% url 'register' %}" class="btn btn-light btn-lg px-4 py-3 shadow">
+                            <i class="fas fa-user-plus me-2"></i> Get Started
                         </a>
-                        <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-4 py-3">
+                        <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg px-4 py-3">
                             <i class="fas fa-sign-in-alt me-2"></i> Sign In
                         </a>
                         {% else %}
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg px-4 py-3 shadow-lg">
-                            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                        <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg px-4 py-3 shadow">
+                            <i class="fas fa-tachometer-alt me-2"></i> Go to Dashboard
                         </a>
                         {% endif %}
                     </div>
-                    <div class="row text-center g-4">
+                    <div class="row text-center g-3">
                         <div class="col-4">
                             <div class="stat-box">
-                                <h3 class="fw-bold text-white mb-1">40%</h3>
-                                <small class="text-white-75">Waste Reduction</small>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="stat-box">
-                                <h3 class="fw-bold text-white mb-1">99%</h3>
-                                <small class="text-white-75">AI Accuracy</small>
+                                <h3 class="fw-bold text-white mb-1">500+</h3>
+                                <small class="text-white-75">Items Monitored</small>
                             </div>
                         </div>
                         <div class="col-4">
                             <div class="stat-box">
                                 <h3 class="fw-bold text-white mb-1">24/7</h3>
-                                <small class="text-white-75">Monitoring</small>
+                                <small class="text-white-75">Expiry Alerts</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-box">
+                                <h3 class="fw-bold text-white mb-1">100%</h3>
+                                <small class="text-white-75">Control</small>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-6">
-                    <div class="hero-image-container">
+                    <div class="hero-image-container text-center">
                         <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80"
-                             class="img-fluid rounded-3 shadow-lg" alt="Food Inventory Management">
-                        <div class="image-overlay">
-                            <div class="overlay-content">
-                                <i class=""></i>
-                                <h5 class="text-white mb-0"></h5>
-                            </div>
-                        </div>
+                             class="img-fluid rounded-4 shadow-lg" alt="Food Inventory Management">
                     </div>
                 </div>
             </div>
@@ -72,288 +64,63 @@
     <section class="py-5 bg-light">
         <div class="container">
             <div class="text-center mb-5">
-                <h2 class="display-5 fw-bold mb-3">Powerful Features</h2>
-                <p class="lead text-muted">Everything you need for modern inventory management</p>
+                <h2 class="display-5 fw-bold mb-3">Core Features</h2>
+                <p class="lead text-muted">Complete control over your supermarket inventory</p>
             </div>
 
             <div class="row g-4">
-               
-
                 <div class="col-md-6 col-lg-4">
-                    <div class="feature-card text-center h-100">
-                        <div class="feature-icon mb-3">
-                            <i class="fas fa-robot"></i>
-                        </div>
-                        <h5 class="fw-bold">AI Status Predictor</h5>
-                        <p class="text-muted">Evaluate food item spoilage risk using a powerful Random Forest machine learning classifier.</p>
-                    </div>
-                </div>
-
-                <div class="col-md-6 col-lg-4">
-                    <div class="feature-card text-center h-100">
+                    <div class="feature-card text-center h-100 p-4 bg-white rounded-3 shadow-sm">
                         <div class="feature-icon mb-3">
                             <i class="fas fa-clock"></i>
                         </div>
-                        <h5 class="fw-bold">Expiry Alerts</h5>
-                        <p class="text-muted">Get automated notifications for items approaching expiration dates.</p>
+                        <h5 class="fw-bold">Expiry Date Tracking</h5>
+                        <p class="text-muted">Color-coded signs (Red for ≤ 3 days, Orange for ≤ 7 days, Green for safe) to prevent spoilage.</p>
                     </div>
                 </div>
 
                 <div class="col-md-6 col-lg-4">
-                    <div class="feature-card text-center h-100">
+                    <div class="feature-card text-center h-100 p-4 bg-white rounded-3 shadow-sm">
                         <div class="feature-icon mb-3">
-                            <i class="fas fa-chart-bar"></i>
+                            <i class="fas fa-exclamation-triangle"></i>
                         </div>
-                        <h5 class="fw-bold">Analytics</h5>
-                        <p class="text-muted">Comprehensive reports and insights for data-driven decision making.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works -->
-    <section class="py-5">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="display-5 fw-bold mb-3">How It Works</h2>
-                <p class="lead text-muted">Simple steps to transform your inventory management</p>
-            </div>
-
-            <div class="row g-4">
-              
-
-                <div class="col-md-6 col-lg-4">
-                    <div class="step-card text-center">
-                        <div class="step-number mb-3">1</div>
-                        <h5 class="fw-bold mb-3">Track Inventory</h5>
-                        <p class="text-muted">Real-time monitoring of stock levels, active expiry dates, and all store movements.</p>
-                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80"
-                             class="img-fluid rounded mt-3" alt="Tracking">
+                        <h5 class="fw-bold">Low Stock Warnings</h5>
+                        <p class="text-muted">Automatic warning alerts when item stock drops below 10 units so you can reorder in time.</p>
                     </div>
                 </div>
 
                 <div class="col-md-6 col-lg-4">
-                    <div class="step-card text-center">
-                        <div class="step-number mb-3">2</div>
-                        <h5 class="fw-bold mb-3">Get Insights</h5>
-                        <p class="text-muted">The AI subsystem analyzes your metrics to provide advanced operational status predictions.</p>
-                        <img src="https://images.unsplash.com/photo-1555949963-aa79dcee981c?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80"
-                             class="img-fluid rounded mt-3" alt="Analytics">
-                    </div>
-                </div>
-
-                <div class="col-md-6 col-lg-4">
-                    <div class="step-card text-center">
-                        <div class="step-number mb-3">3</div>
-                        <h5 class="fw-bold mb-3">Optimize</h5>
-                        <p class="text-muted">Automated color-coded alerts help you mitigate losses by destroying expired items rapidly.</p>
-                        <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80"
-                             class="img-fluid rounded mt-3" alt="Optimization">
+                    <div class="feature-card text-center h-100 p-4 bg-white rounded-3 shadow-sm">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <h5 class="fw-bold">Transaction Management</h5>
+                        <p class="text-muted">Seamlessly record sales, restocks, waste, and discounts with live inventory adjustments.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-
-    <!-- Benefits -->
-    <section class="py-5 bg-primary text-white">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="display-5 fw-bold mb-3">Why Choose Our System?</h2>
-                <p class="lead">See the impact on your business</p>
-            </div>
-
-            <div class="row g-4 text-center">
-                <div class="col-md-4">
-                    <div class="benefit-item">
-                        <i class="fas fa-dollar-sign fa-3x mb-3"></i>
-                        <h4 class="fw-bold">Increase Profits</h4>
-                        <p>Reduce costs and optimize inventory for better financial performance.</p>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="benefit-item">
-                        <i class="fas fa-clock fa-3x mb-3"></i>
-                        <h4 class="fw-bold">Save Time</h4>
-                        <p>Automate manual processes and focus on growing your business.</p>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="benefit-item">
-                        <i class="fas fa-leaf fa-3x mb-3"></i>
-                        <h4 class="fw-bold">Reduce Waste</h4>
-                        <p>Minimize food waste with intelligent expiry tracking and alerts.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="py-5 bg-light">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-8">
-                    <h2 class="display-5 fw-bold mb-3">Ready to Get Started?</h2>
-                    <p class="lead mb-4">Join thousands of supermarkets using AI-powered inventory management.</p>
-                    <div class="d-flex gap-3">
-                        {% if not current_user.is_authenticated %}
-                        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 py-3">
-                            <i class="fas fa-rocket me-2"></i> Start Free Trial
-                        </a>
-                        <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg px-4 py-3">
-                            Sign In
-                        </a>
-                        {% else %}
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg px-4 py-3">
-                            <i class="fas fa-dashboard me-2"></i> Go to Dashboard
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80"
-                         class="img-fluid rounded-3" alt="Food Inventory">
-                </div>
-            </div>
-        </div>
-    </section>
-
-   
 </div>
 
 <style>
-    /* Hero Section */
-    .hero-section {
-        position: relative;
-        overflow: hidden;
-    }
-
-    .hero-image-container {
-        position: relative;
-        border-radius: 15px;
-        overflow: hidden;
-    }
-
-    .image-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(transparent, rgba(0,0,0,0.8));
-        padding: 20px;
-    }
-
-    .overlay-content {
-        text-align: center;
-    }
-
     .stat-box {
-        padding: 20px;
+        padding: 15px;
         background: rgba(255, 255, 255, 0.1);
         border-radius: 10px;
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(5px);
     }
-
-    /* Feature Cards */
-    .feature-card {
-        background: white;
-        padding: 30px 20px;
-        border-radius: 15px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        transition: transform 0.3s ease;
-        height: 100%;
-    }
-
-    .feature-card:hover {
-        transform: translateY(-5px);
-    }
-
     .feature-icon {
-        width: 70px;
-        height: 70px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        width: 65px;
+        height: 65px;
+        background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 1.8rem;
+        font-size: 1.6rem;
         margin: 0 auto;
-    }
-
-    /* Step Cards */
-    .step-card {
-        background: white;
-        padding: 30px 20px;
-        border-radius: 15px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        transition: transform 0.3s ease;
-        height: 100%;
-    }
-
-    .step-card:hover {
-        transform: translateY(-5px);
-    }
-
-    .step-number {
-        width: 50px;
-        height: 50px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        font-weight: bold;
-        margin: 0 auto;
-    }
-
-    /* Benefits */
-    .benefit-item {
-        padding: 30px;
-    }
-
-    .benefit-item i {
-        color: rgba(255, 255, 255, 0.8);
-    }
-
-    /* Social Links */
-    .social-links a {
-        display: inline-block;
-        width: 40px;
-        height: 40px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 50%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-    }
-
-    .social-links a:hover {
-        background: #667eea;
-        transform: translateY(-3px);
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .hero-section {
-            min-height: auto;
-            padding: 80px 0;
-        }
-
-        .display-4 {
-            font-size: 2.5rem;
-        }
-
-        .display-5 {
-            font-size: 2rem;
-        }
     }
 </style>
 {% endblock %}

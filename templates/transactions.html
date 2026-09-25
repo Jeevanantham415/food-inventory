@@ -39,8 +39,8 @@
                     <tbody id="transactionTable">
                         {% for t in transactions %}
                         <tr>
-                            <td>{{ t.transaction_date.strftime('%Y-%m-%d %H:%M') }}</td>
-                            <td>{{ t.food_item.name }}</td>
+                            <td>{{ t.transaction_date|date:"Y-m-d H:i" }}</td>
+                            <td>{{ t.item.name }}</td>
                             <td>
                                 {% if t.transaction_type == 'sale' %}
                                 <span class="badge bg-success">Sale</span>
@@ -55,12 +55,12 @@
                                 {% endif %}
                             </td>
                             <td>{{ t.quantity }}</td>
-                            <td>Rs{{ "%.2f"|format(t.price_per_unit) }}</td>
-                            <td>Rs{{ "%.2f"|format(t.total_amount) }}</td>
-                            <td>{{ t.recorded_by.username if t.recorded_by else 'System' }}</td>
-                            <td>{{ t.notes or '' }}</td>
+                            <td>₹{{ t.price_per_unit|floatformat:2 }}</td>
+                            <td>₹{{ t.total_amount|floatformat:2 }}</td>
+                            <td>{{ t.user.username|default:'System' }}</td>
+                            <td>{{ t.notes|default:'' }}</td>
                         </tr>
-                        {% else %}
+                        {% empty %}
                         <tr>
                             <td colspan="8" class="text-center">No transactions found</td>
                         </tr>
@@ -72,10 +72,7 @@
     </div>
 </div>
 
-<!-- ===================== -->
 <!-- ADD MODAL -->
-<!-- ===================== -->
-
 <div class="modal fade" id="transactionModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -153,7 +150,6 @@
 <script>
 let modal = new bootstrap.Modal(document.getElementById('transactionModal'));
 
-// Search
 document.getElementById("searchInput").addEventListener("keyup", function() {
     let value = this.value.toLowerCase();
     document.querySelectorAll("#transactionTable tr").forEach(row => {
@@ -193,7 +189,7 @@ function saveTransaction() {
         return;
     }
 
-    fetch("/api/transactions", {
+    fetch("/api/transactions/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)

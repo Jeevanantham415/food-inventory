@@ -1,6 +1,7 @@
 {% extends "base.html" %}
+{% load inventory_extras %}
 
-{% block title %}Expiry Tracking - AI Food Inventory{% endblock %}
+{% block title %}Expiry Tracking - Food Inventory System{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -14,24 +15,18 @@
     </div>
 
     <!-- Filter Controls -->
-    <div class="card mb-4">
+    <div class="card mb-4 shadow-sm border-0">
         <div class="card-body">
             <div class="row align-items-center">
-                <div class="col-md-8">
+                <div class="col-md-6">
                     <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-filter"></i></span>
+                        <span class="input-group-text bg-white"><i class="fas fa-filter text-primary"></i></span>
                         <select class="form-select" id="daysFilter" onchange="filterExpiry()">
-                            <option value="3" {% if days_filter==3 %}selected{% endif %}>Next 3 days</option>
-                            <option value="7" {% if days_filter==7 %}selected{% endif %}>Next 7 days</option>
-                            <option value="14">Next 14 days</option>
-                            <option value="30">Next 30 days</option>
-                            <option value="all">All upcoming</option>
+                            <option value="3" {% if days_filter == 3 %}selected{% endif %}>Next 3 days</option>
+                            <option value="7" {% if days_filter == 7 %}selected{% endif %}>Next 7 days</option>
+                            <option value="14" {% if days_filter == 14 %}selected{% endif %}>Next 14 days</option>
+                            <option value="30" {% if days_filter == 30 %}selected{% endif %}>Next 30 days</option>
                         </select>
-                    </div>
-                </div>
-                <div class="col-md-4 text-end">
-                    <div class="btn-group">
-
                     </div>
                 </div>
             </div>
@@ -41,21 +36,21 @@
     <!-- Tabs -->
     <ul class="nav nav-tabs mb-4" id="expiryTabs">
         <li class="nav-item">
-            <button class="nav-link active" id="expiring-tab" data-bs-toggle="tab" data-bs-target="#expiring">
-                <i class="fas fa-clock text-warning"></i> Expiring Soon
-                <span class="badge bg-warning ms-2">{{ expiring_items|length }}</span>
+            <button class="nav-link active fw-bold" id="expiring-tab" data-bs-toggle="tab" data-bs-target="#expiring">
+                <i class="fas fa-clock text-warning me-1"></i> Expiring Soon
+                <span class="badge bg-warning text-dark ms-2">{{ expiring_items|length }}</span>
             </button>
         </li>
         <li class="nav-item">
-            <button class="nav-link" id="expired-tab" data-bs-toggle="tab" data-bs-target="#expired">
-                <i class="fas fa-skull-crossbones text-danger"></i> Already Expired
+            <button class="nav-link fw-bold" id="expired-tab" data-bs-toggle="tab" data-bs-target="#expired">
+                <i class="fas fa-skull-crossbones text-danger me-1"></i> Already Expired
                 <span class="badge bg-danger ms-2">{{ expired_items|length }}</span>
             </button>
         </li>
         <li class="nav-item">
-            <button class="nav-link" id="lowstock-tab" data-bs-toggle="tab" data-bs-target="#lowstock">
-                <i class="fas fa-exclamation-triangle text-warning"></i> Low Stock
-                <span class="badge bg-warning ms-2">{{ low_stock_items|length }}</span>
+            <button class="nav-link fw-bold" id="lowstock-tab" data-bs-toggle="tab" data-bs-target="#lowstock">
+                <i class="fas fa-exclamation-triangle text-warning me-1"></i> Low Stock
+                <span class="badge bg-warning text-dark ms-2">{{ low_stock_items|length }}</span>
             </button>
         </li>
     </ul>
@@ -65,11 +60,11 @@
         <!-- Expiring Soon Tab -->
         <div class="tab-pane fade show active" id="expiring">
             {% if expiring_items %}
-            <div class="card">
-                <div class="card-body">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
                                 <tr>
                                     <th>Item Name</th>
                                     <th>Category</th>
@@ -78,51 +73,34 @@
                                     <th>Days Left</th>
                                     <th>Current Price</th>
                                     <th>Suggested Discount</th>
-
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for item in expiring_items %}
-                                <tr
-                                    class="{% if item.days_to_expiry == 0 %}table-warning{% elif item.days_to_expiry < 0 %}table-danger{% endif %}">
-                                    <td>
-                                        <strong>{{ item.name }}</strong>
-                                    </td>
+                                <tr class="{% if item.days_to_expiry == 0 %}table-warning{% elif item.days_to_expiry < 0 %}table-danger{% endif %}">
+                                    <td><strong>{{ item.name }}</strong></td>
                                     <td><span class="badge bg-info">{{ item.category }}</span></td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>{{ item.expiry_date|date:"Y-m-d" }}</td>
                                     <td>
-                                        <div class="d-flex align-items-center">
-                                            {{ item.quantity }}
-                                            {% if item.quantity > 100 * 1.2 %}
-                                            <span class="ms-2 badge bg-danger">High Quantity</span>
-                                            {% endif %}
-                                        </div>
+                                        {% if item.days_to_expiry < 0 %}
+                                        <span class="badge bg-danger">Expired</span>
+                                        {% elif item.days_to_expiry == 0 %}
+                                        <span class="badge bg-danger">Today</span>
+                                        {% elif item.days_to_expiry == 1 %}
+                                        <span class="badge bg-warning text-dark">Tomorrow</span>
+                                        {% elif item.days_to_expiry <= 3 %}
+                                        <span class="badge bg-warning text-dark">{{ item.days_to_expiry }} days</span>
+                                        {% else %}
+                                        <span class="badge bg-success">{{ item.days_to_expiry }} days</span>
+                                        {% endif %}
                                     </td>
-                                    <td>{{ item.expiry_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>₹{{ item.price|floatformat:2 }}</td>
                                     <td>
-                                        <div class="d-flex align-items-center">
-                                            {% if item.days_to_expiry < 0 %} <span class="badge bg-danger">
-                                                Expired</span>
-                                                {% elif item.days_to_expiry == 0 %}
-                                                <span class="badge bg-danger">Today</span>
-                                                {% elif item.days_to_expiry == 1 %}
-                                                <span class="badge bg-warning">Tomorrow</span>
-                                                {% elif item.days_to_expiry <= 3 %} <span class="badge bg-warning">{{
-                                                    item.days_to_expiry }} days</span>
-                                                    {% else %}
-                                                    <span class="badge bg-success">{{ item.days_to_expiry }} days</span>
-                                                    {% endif %}
-                                        </div>
+                                        {% with discount=item.days_to_expiry|calculate_discount %}
+                                        <span class="badge bg-success">{{ discount }}% OFF</span>
+                                        {% endwith %}
                                     </td>
-                                    <td>₹{{ "%.2f"|format(item.price) }}</td>
-                                    <td>
-                                        {% set discount = calculate_discount(item.days_to_expiry) %}
-                                        <span class="badge bg-success">
-                                            {{ discount }}% OFF
-                                        </span>
-                                        <br>
-                                        <small>₹{{ "%.2f"|format(item.price * (100 - discount) / 100) }}</small>
-                                    </td>
-
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -131,12 +109,10 @@
                 </div>
             </div>
             {% else %}
-            <div class="card">
-                <div class="card-body text-center py-5">
-                    <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
-                    <h4>No items expiring soon!</h4>
-                    <p class="text-muted">Great job managing your inventory!</p>
-                </div>
+            <div class="card shadow-sm border-0 text-center py-5">
+                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                <h4>No items expiring soon!</h4>
+                <p class="text-muted">Great job managing your inventory!</p>
             </div>
             {% endif %}
         </div>
@@ -144,28 +120,20 @@
         <!-- Expired Tab -->
         <div class="tab-pane fade" id="expired">
             {% if expired_items %}
-            <div class="card border-danger">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Expired Items - Immediate Action
-                        Required</h5>
+            <div class="card border-danger shadow-sm">
+                <div class="card-header bg-danger text-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i> Expired Items - Immediate Action Required</h5>
                 </div>
-                <div class="card-body">
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <strong>Warning:</strong> These items have already expired and should be removed immediately.
-                    </div>
-
+                <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
                                 <tr>
                                     <th>Item Name</th>
                                     <th>Category</th>
                                     <th>Quantity</th>
                                     <th>Expiry Date</th>
-                                    <th>Days Since Expiry</th>
-                                    <th>Expiring Soon (Old)</th>
-
+                                    <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -173,23 +141,12 @@
                                 <tr class="table-danger">
                                     <td>
                                         <strong>{{ item.name }}</strong>
-                                        <br><small class="text-muted">ID: {{ item.item_code|default('N/A') }}</small>
+                                        <br><small class="text-muted">Code: {{ item.item_code }}</small>
                                     </td>
                                     <td><span class="badge bg-info">{{ item.category }}</span></td>
                                     <td>{{ item.quantity }}</td>
-                                    <td>{{ item.expiry_date.strftime('%Y-%m-%d') }}</td>
-                                    <td>
-                                        <span class="badge bg-danger">
-                                            {{ -item.days_to_expiry }} days ago
-                                        </span>
-                                    </td>
-                                    <td>
-                                        {% if -item.days_to_expiry <= 3 %} <span class="badge bg-warning">Yes</span>
-                                            {% else %}
-                                            <span class="badge bg-secondary">No</span>
-                                            {% endif %}
-                                    </td>
-
+                                    <td>{{ item.expiry_date|date:"Y-m-d" }}</td>
+                                    <td><span class="badge bg-danger">Expired</span></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -198,12 +155,10 @@
                 </div>
             </div>
             {% else %}
-            <div class="card">
-                <div class="card-body text-center py-5">
-                    <i class="fas fa-trophy fa-4x text-success mb-3"></i>
-                    <h4>No expired items found!</h4>
-                    <p class="text-muted">Excellent inventory management!</p>
-                </div>
+            <div class="card shadow-sm border-0 text-center py-5">
+                <i class="fas fa-trophy fa-4x text-success mb-3"></i>
+                <h4>No expired items found!</h4>
+                <p class="text-muted">Excellent inventory management!</p>
             </div>
             {% endif %}
         </div>
@@ -211,14 +166,14 @@
         <!-- Low Stock Tab -->
         <div class="tab-pane fade" id="lowstock">
             {% if low_stock_items %}
-            <div class="card border-warning">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Low Stock Items - Reorder Required</h5>
+            <div class="card border-warning shadow-sm">
+                <div class="card-header bg-warning text-dark py-3">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i> Low Stock Items - Reorder Required</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
                                 <tr>
                                     <th>Item Name</th>
                                     <th>Category</th>
@@ -232,14 +187,12 @@
                                 <tr class="table-warning">
                                     <td>
                                         <strong>{{ item.name }}</strong>
-                                        <br><small class="text-muted">ID: {{ item.item_code|default('N/A') }}</small>
+                                        <br><small class="text-muted">Code: {{ item.item_code }}</small>
                                     </td>
                                     <td><span class="badge bg-info">{{ item.category }}</span></td>
-                                    <td>{{ item.quantity }}</td>
-                                    <td>
-                                        <span class="badge bg-danger">Low Stock</span>
-                                    </td>
-                                    <td>{{ item.expiry_date.strftime('%Y-%m-%d') if item.expiry_date else 'N/A' }}</td>
+                                    <td><strong>{{ item.quantity }}</strong></td>
+                                    <td><span class="badge bg-danger">Low Stock (< 10)</span></td>
+                                    <td>{{ item.expiry_date|date:"Y-m-d" }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -248,94 +201,12 @@
                 </div>
             </div>
             {% else %}
-            <div class="card">
-                <div class="card-body text-center py-5">
-                    <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
-                    <h4>No low stock items found!</h4>
-                    <p class="text-muted">Inventory levels are healthy!</p>
-                </div>
+            <div class="card shadow-sm border-0 text-center py-5">
+                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                <h4>No low stock items found!</h4>
+                <p class="text-muted">Inventory levels are healthy!</p>
             </div>
             {% endif %}
-        </div>
-    </div>
-
-    <!-- Statistics Card -->
-    <div class="row mt-4">
-        <div class="col-md-4">
-            <div class="card bg-warning text-dark">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-subtitle mb-2">Expiring in 3 Days</h6>
-                            <h3 class="card-title" id="expiring3days">0</h3>
-                        </div>
-                        <i class="fas fa-clock fa-3x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card bg-danger text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-subtitle mb-2">Total Expired</h6>
-                            <h3 class="card-title" id="totalExpired">{{ expired_items|length }}</h3>
-                        </div>
-                        <i class="fas fa-skull-crossbones fa-3x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-subtitle mb-2">Potential Savings</h6>
-                            <h3 class="card-title" id="potentialSavings">₹0</h3>
-                        </div>
-                        <i class="fas fa-dollar-sign fa-3x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Discount Modal -->
-<div class="modal fade" id="discountModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title"><i class="fas fa-tag"></i> Apply Discount</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="discountItemInfo"></div>
-                <div class="mb-3">
-                    <label class="form-label">Discount Percentage</label>
-                    <input type="range" class="form-range" id="discountSlider" min="0" max="70" step="5" value="30">
-                    <div class="d-flex justify-content-between">
-                        <span>0%</span>
-                        <span id="discountValue">30%</span>
-                        <span>70%</span>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">New Price</label>
-                    <div class="input-group">
-                        <span class="input-group-text">₹</span>
-                        <input type="text" class="form-control" id="newPrice" readonly>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-warning" onclick="confirmDiscount()">
-                    <i class="fas fa-check"></i> Apply Discount
-                </button>
-            </div>
         </div>
     </div>
 </div>
@@ -343,160 +214,9 @@
 
 {% block extra_js %}
 <script>
-    // Calculate discount based on days to expiry
-    function calculate_discount(days) {
-        if (days <= 0) return 70;
-        if (days <= 1) return 60;
-        if (days <= 2) return 50;
-        if (days <= 3) return 40;
-        if (days <= 5) return 30;
-        if (days <= 7) return 20;
-        return 10;
-    }
-
-    // Filter expiry items
     function filterExpiry() {
         const days = document.getElementById('daysFilter').value;
-        window.location.href = `{{ url_for('expiry_tracking') }}?days=${days}`;
+        window.location.href = "{% url 'expiry_tracking' %}?days=" + days;
     }
-
-    // Apply discount to an item
-    function applyDiscount(itemId, discountPercent) {
-        const discountModal = new bootstrap.Modal(document.getElementById('discountModal'));
-
-        // Fetch item details
-        fetch(`/api/items/${itemId}`)
-            .then(response => response.json())
-            .then(item => {
-                const originalPrice = item.price;
-                document.getElementById('discountItemInfo').innerHTML = `
-                    <p><strong>${item.name}</strong></p>
-                    <p>Original Price: ₹${originalPrice.toFixed(2)}</p>
-                    <p>Expires in: ${item.days_to_expiry} days</p>
-                `;
-
-                // Update slider and price
-                document.getElementById('discountSlider').value = discountPercent;
-                document.getElementById('discountValue').textContent = `${discountPercent}%`;
-                updateNewPrice(originalPrice, discountPercent);
-
-                // Store item data
-                document.getElementById('discountModal').dataset.itemId = itemId;
-                document.getElementById('discountModal').dataset.originalPrice = originalPrice;
-
-                discountModal.show();
-            });
-    }
-
-    // Update new price when slider changes
-    document.getElementById('discountSlider').addEventListener('input', function () {
-        const discountPercent = this.value;
-        const originalPrice = parseFloat(document.getElementById('discountModal').dataset.originalPrice);
-        updateNewPrice(originalPrice, discountPercent);
-    });
-
-    function updateNewPrice(originalPrice, discountPercent) {
-        const newPrice = originalPrice * (100 - discountPercent) / 100;
-        document.getElementById('newPrice').value = newPrice.toFixed(2);
-        document.getElementById('discountValue').textContent = `${discountPercent}%`;
-    }
-
-    function confirmDiscount() {
-        const itemId = document.getElementById('discountModal').dataset.itemId;
-        const discountPercent = document.getElementById('discountSlider').value;
-
-        fetch(`/api/items/${itemId}/discount`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ discount: discountPercent })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Discount applied successfully!');
-                    location.reload();
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            });
-
-        bootstrap.Modal.getInstance(document.getElementById('discountModal')).hide();
-    }
-
-    // Other functions
-    function applyDiscounts() {
-        if (confirm('Apply automatic discounts to all expiring items?')) {
-            alert('Discounts will be applied to expiring items.');
-            // Implementation would call API to apply discounts
-        }
-    }
-
-    function generateExpiryReport() {
-        alert('Expiry report generation started. Check reports section.');
-    }
-
-    function moveToDonation(itemId) {
-        if (confirm('Mark this item for donation?')) {
-            fetch(`/api/items/${itemId}/donate`, {
-                method: 'POST'
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Item marked for donation!');
-                        location.reload();
-                    }
-                });
-        }
-    }
-
-    function markAsWaste(itemId) {
-        if (confirm('Mark this item as waste?')) {
-            fetch(`/api/items/${itemId}/waste`, {
-                method: 'POST'
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Item marked as waste!');
-                        location.reload();
-                    }
-                });
-        }
-    }
-
-    function removeExpiredItem(itemId, action) {
-        if (confirm(`Are you sure you want to ${action} this expired item?`)) {
-            fetch(`/api/items/${itemId}/${action}`, {
-                method: 'POST'
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(`Item ${action === 'waste' ? 'disposed' : 'donated'} successfully!`);
-                        location.reload();
-                    }
-                });
-        }
-    }
-
-    // Calculate statistics
-    document.addEventListener('DOMContentLoaded', function () {
-        // Count items expiring in 10 days
-        const expiring10days = document.querySelectorAll('.badge.bg-warning').length; // approximation
-        document.getElementById('expiring3days').textContent = expiring10days;
-
-        // Calculate potential savings
-        let totalSavings = 0;
-        document.querySelectorAll('#expiring tbody tr').forEach(row => {
-            const quantity = parseInt(row.cells[2].textContent) || 0;
-            const price = parseFloat(row.cells[5].textContent.replace('₹', '')) || 0;
-            const discount = calculate_discount(parseInt(row.cells[4].querySelector('.badge').textContent) || 0);
-            totalSavings += (price * discount / 100) * quantity;
-        });
-        document.getElementById('potentialSavings').textContent = '₹' + totalSavings.toFixed(2);
-    });
 </script>
 {% endblock %}

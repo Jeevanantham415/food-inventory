@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
-import json
-from database import db, FoodItem, Transaction
+from datetime import datetime, timedelta, date
+from django.utils import timezone
+from inventory.models import FoodItem, Transaction
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,10 +14,9 @@ class DataProcessor:
     def process_inventory_data(self):
         """Process all inventory data for analysis"""
         try:
-            items = FoodItem.query.all()
-            transactions = Transaction.query.filter(
-                Transaction.transaction_date >= datetime.now() - timedelta(days=90)
-            ).all()
+            items = FoodItem.objects.all()
+            cutoff_date = timezone.now() - timedelta(days=90)
+            transactions = Transaction.objects.filter(transaction_date__gte=cutoff_date)
             
             # Create DataFrames
             items_df = pd.DataFrame([{
@@ -204,9 +203,6 @@ class DataProcessor:
         elif item.days_to_expiry <= 7:
             score -= 15
         
-        # Sales velocity (placeholder)
-        # In real implementation, calculate based on historical sales
-        
         return max(0, min(100, score))
     
     def predict_stockout_date(self, item, daily_sales_rate):
@@ -221,19 +217,10 @@ class DataProcessor:
     
     def generate_reorder_recommendation(self, item, lead_time_days=2, safety_factor=1.2):
         """Generate reorder recommendation"""
-        # Calculate average daily sales (placeholder)
-        avg_daily_sales = 10  # Should be calculated from historical data
-        
-        # Calculate demand during lead time
+        avg_daily_sales = 10
         lead_time_demand = avg_daily_sales * lead_time_days
-        
-        # Calculate safety stock
         safety_stock = lead_time_demand * (safety_factor - 1)
-        
-        # Calculate reorder point
         reorder_point = lead_time_demand + safety_stock
-        
-        # Calculate order quantity
         order_quantity = max(0, 100 - item.quantity)
         
         return {
