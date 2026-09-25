@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-exchange-alt"></i> Transactions</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#transactionModal">
+            <i class="fas fa-plus"></i> Add Transaction
+        </button>
+    </div>
+
+    <!-- Search -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search transactions...">
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Item</th>
+                            <th>Type</th>
+                            <th>Qty</th>
+                            <th>Price/Unit</th>
+                            <th>Total</th>
+                            <th>Recorded By</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionTable">
+                        {% for t in transactions %}
+                        <tr>
+                            <td>{{ t.transaction_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ t.food_item.name }}</td>
+                            <td>
+                                {% if t.transaction_type == 'sale' %}
+                                <span class="badge bg-success">Sale</span>
+                                {% elif t.transaction_type == 'restock' %}
+                                <span class="badge bg-primary">Restock</span>
+                                {% elif t.transaction_type == 'waste' %}
+                                <span class="badge bg-danger">Waste</span>
+                                {% elif t.transaction_type == 'discount' %}
+                                <span class="badge bg-warning text-dark">Discount</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ t.transaction_type }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ t.quantity }}</td>
+                            <td>Rs{{ "%.2f"|format(t.price_per_unit) }}</td>
+                            <td>Rs{{ "%.2f"|format(t.total_amount) }}</td>
+                            <td>{{ t.recorded_by.username if t.recorded_by else 'System' }}</td>
+                            <td>{{ t.notes or '' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center">No transactions found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== -->
+<!-- ADD MODAL -->
+<!-- ===================== -->
+
+<div class="modal fade" id="transactionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Record Transaction</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form id="transactionForm">
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label>Item *</label>
+                            <select id="item_id" class="form-select" required onchange="updatePrice()">
+                                <option value="">Select an Item</option>
+                                {% for item in items %}
+                                <option value="{{ item.id }}" data-price="{{ item.price }}">{{ item.name }} (Stock: {{ item.quantity }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Transaction Type *</label>
+                            <select id="transaction_type" class="form-select" required>
+                                <option value="sale">Sale (Deduct Stock)</option>
+                                <option value="restock">Restock (Add Stock)</option>
+                                <option value="waste">Waste (Deduct Stock)</option>
+                                <option value="discount">Discount (Sale with discount)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label>Quantity *</label>
+                            <input type="number" id="quantity" class="form-control" required min="1" oninput="calculateTotal()">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Price Per Unit *</label>
+                            <input type="number" step="0.01" id="price_per_unit" class="form-control" required oninput="calculateTotal()">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label>Total Amount</label>
+                            <input type="number" step="0.01" id="total_amount" class="form-control" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Notes</label>
+                            <input type="text" id="notes" class="form-control">
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTransaction()">
+                    <i class="fas fa-save"></i> Save Transaction
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let modal = new bootstrap.Modal(document.getElementById('transactionModal'));
+
+// Search
+document.getElementById("searchInput").addEventListener("keyup", function() {
+    let value = this.value.toLowerCase();
+    document.querySelectorAll("#transactionTable tr").forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(value) ? "" : "none";
+    });
+});
+
+function updatePrice() {
+    let select = document.getElementById("item_id");
+    let selectedOption = select.options[select.selectedIndex];
+    if(selectedOption.value) {
+        document.getElementById("price_per_unit").value = selectedOption.getAttribute("data-price");
+        calculateTotal();
+    } else {
+        document.getElementById("price_per_unit").value = "";
+        document.getElementById("total_amount").value = "";
+    }
+}
+
+function calculateTotal() {
+    let qty = parseFloat(document.getElementById("quantity").value) || 0;
+    let price = parseFloat(document.getElementById("price_per_unit").value) || 0;
+    document.getElementById("total_amount").value = (qty * price).toFixed(2);
+}
+
+function saveTransaction() {
+    const data = {
+        item_id: document.getElementById("item_id").value,
+        transaction_type: document.getElementById("transaction_type").value,
+        quantity: document.getElementById("quantity").value,
+        price_per_unit: document.getElementById("price_per_unit").value,
+        notes: document.getElementById("notes").value
+    };
+
+    if (!data.item_id || !data.transaction_type || !data.quantity || !data.price_per_unit) {
+        alert("Please fill all required fields.");
+        return;
+    }
+
+    fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(response => {
+        if (response.success) {
+            location.reload();
+        } else {
+            alert(response.error);
+        }
+    });
+}
+
+document.getElementById('transactionModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById("transactionForm").reset();
+});
+</script>
+{% endblock %}

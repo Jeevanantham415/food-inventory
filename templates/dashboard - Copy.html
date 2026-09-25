@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AI Food Inventory{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </h1>
+            <p class="text-muted">Welcome back, {{ current_user.username }}! Here's your inventory overview.</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2">Total Items</h6>
+                            <h2 class="card-title">{{ total_items }}</h2>
+                        </div>
+                        <i class="fas fa-boxes fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2">Low Stock Items</h6>
+                            <h2 class="card-title">{{ low_stock_items }}</h2>
+                        </div>
+                        <i class="fas fa-exclamation-triangle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2">Expiring Soon</h6>
+                            <h2 class="card-title">{{ expiring_soon }}</h2>
+                        </div>
+                        <i class="fas fa-clock fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2">Expired Items</h6>
+                            <h2 class="card-title">{{ expired_items }}</h2>
+                        </div>
+                        <i class="fas fa-skull-crossbones fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts and Alerts Row -->
+    <div class="row">
+        <!-- Left Column: Charts -->
+        <div class="col-lg-8 mb-4">
+            <!-- Inventory Distribution Chart -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Inventory by Category</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart" height="250"></canvas>
+                </div>
+            </div>
+            
+            <!-- Top Selling Items -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Top Selling Items</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Category</th>
+                                    <th>Stock</th>
+                                    <th>Total Sold</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item, total_sold in top_items %}
+                                <tr>
+                                    <td>{{ item.name }}</td>
+                                    <td><span class="badge bg-info">{{ item.category }}</span></td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>{{ total_sold }}</td>
+                                    <td>
+                                        {% if item.is_low_stock %}
+                                        <span class="badge bg-warning">Low Stock</span>
+                                        {% elif item.is_expired %}
+                                        <span class="badge bg-danger">Expired</span>
+                                        {% elif item.days_to_expiry <= 3 %}
+                                        <span class="badge bg-danger">Expiring Soon</span>
+                                        {% else %}
+                                        <span class="badge bg-success">Good</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Alerts -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-bell"></i> Recent Alerts</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for alert in recent_alerts %}
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    {% if alert.alert_type == 'expiry' %}
+                                    <i class="fas fa-clock text-danger"></i>
+                                    {% elif alert.alert_type == 'low_stock' %}
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                    {% else %}
+                                    <i class="fas fa-info-circle text-info"></i>
+                                    {% endif %}
+                                    {{ alert.alert_type|title }}
+                                </h6>
+                                <small>{{ alert.created_at.strftime('%H:%M') }}</small>
+                            </div>
+                            <p class="mb-1">{{ alert.message }}</p>
+                            <small class="text-muted">Click to resolve</small>
+                        </a>
+                        {% else %}
+                        <div class="list-group-item">
+                            <p class="text-center text-muted mb-0">
+                                <i class="fas fa-check-circle fa-2x text-success"></i><br>
+                                No new alerts!
+                            </p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('expiry_tracking') }}" class="btn btn-sm btn-outline-danger">
+                        View All Alerts
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('item_scanner') }}" class="btn btn-success">
+                            <i class="fas fa-camera"></i> Scan New Item
+                        </a>
+                        <a href="{{ url_for('inventory') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Item Manually
+                        </a>
+                        <a href="{{ url_for('demand_prediction') }}" class="btn btn-info">
+                            <i class="fas fa-chart-line"></i> Check Demand Predictions
+                        </a>
+                        <a href="{{ url_for('reports') }}" class="btn btn-secondary">
+                            <i class="fas fa-file-export"></i> Generate Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+    // Initialize category chart
+    fetch('/api/dashboard-stats')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Dashboard stats:', data);
+        });
+    
+    // Initialize category distribution chart
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Dairy', 'Bakery', 'Beverages', 'Vegetables', 'Fruits', 'Meat', 'Frozen'],
+            datasets: [{
+                data: [12, 19, 15, 25, 18, 8, 12],
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                    '#9966FF', '#FF9F40', '#C9CBCF'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

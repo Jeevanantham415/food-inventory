@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Login - AI Food Inventory{% endblock %}
+
+{% block content %}
+<style>
+    /* Full Page Gradient Background matching the Landing Page */
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background-size: cover;
+    }
+
+    /* Premium Card Design */
+    .auth-card {
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+        transition: transform 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .auth-card:hover {
+        transform: translateY(-5px);
+    }
+
+    /* Vibrant Card Header */
+    .auth-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px 20px;
+        text-align: center;
+        color: white;
+        border-radius: 20px 20px 0 0;
+        position: relative;
+    }
+
+    /* Floating Icon Box */
+    .auth-icon-box {
+        background: white;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .auth-icon-box i {
+        font-size: 2.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Clean Input Fields */
+    .auth-form-control {
+        border-radius: 0 10px 10px 0;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        border-left: none;
+        transition: all 0.3s;
+        box-shadow: none !important;
+    }
+
+    .auth-form-control:focus {
+        border-color: #667eea;
+    }
+
+    .auth-input-group-text {
+        border-radius: 10px 0 0 10px;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-right: none;
+        color: #764ba2;
+    }
+
+    .input-group:focus-within .auth-input-group-text,
+    .input-group:focus-within .auth-form-control {
+        border-color: #667eea;
+    }
+
+    .input-group:focus-within .auth-input-group-text i {
+        color: #667eea;
+    }
+
+    /* Submit Button Animation */
+    .auth-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: white;
+        transition: all 0.3s;
+    }
+
+    .auth-btn:hover {
+        transform: scale(1.02);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+</style>
+
+<div class="container py-5">
+    <div class="row justify-content-center min-vh-100 align-items-center">
+        <div class="col-md-7 col-lg-5">
+            <div class="auth-card">
+                <!-- Premium Header -->
+                <div class="auth-header">
+                    <div class="auth-icon-box">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h2 class="fw-bold mb-1">Welcome Back</h2>
+                    <p class="mb-0 text-white-50">Sign in to your AI Food Inventory</p>
+                </div>
+
+                <!-- Form Body -->
+                <div class="card-body p-5">
+                    <form method="POST" action="{{ url_for('login') }}">
+                        <div class="mb-4">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text auth-input-group-text">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                <input type="text" class="form-control auth-form-control" name="username"
+                                    placeholder="Enter your username" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-5">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text auth-input-group-text">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" class="form-control auth-form-control" name="password"
+                                    placeholder="Enter your password" required>
+                                <button class="btn btn-outline-secondary border-start-0 user-select-none"
+                                    style="border-radius: 0 10px 10px 0; border: 1px solid #e0e0e0;" type="button"
+                                    id="togglePassword">
+                                    <i class="fas fa-eye text-muted"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-grid mb-4">
+                            <button type="submit" class="btn auth-btn btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i> Log In To System
+                            </button>
+                        </div>
+
+                        <div class="text-center">
+                            <p class="mb-0 text-muted">
+                                Don't have an account?
+                                <a href="{{ url_for('register') }}" class="fw-bold"
+                                    style="color: #667eea; text-decoration: none;">
+                                    Register here
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <small class="text-white-50">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Secured by AES-256 Encryption
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const passwordInput = document.querySelector('input[name="password"]');
+        const icon = this.querySelector('i');
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    });
+</script>
+{% endblock %}
